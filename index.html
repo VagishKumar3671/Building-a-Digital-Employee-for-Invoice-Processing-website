@@ -1,0 +1,2150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Invoice Processing Digital Employee — Zamp.ai</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   DESIGN TOKENS — Zamp DNA
+   ============================================================ */
+:root {
+  --bg:          #0A0A0A;
+  --bg-card:     #141414;
+  --bg-card2:    #1A1A1A;
+  --border:      rgba(255,255,255,0.08);
+  --border-hot:  rgba(232,168,64,0.35);
+  --text:        #F0EDE8;
+  --text-muted:  rgba(240,237,232,0.45);
+  --text-dim:    rgba(240,237,232,0.25);
+  --accent:      #E8A840;
+  --accent-dim:  rgba(232,168,64,0.15);
+  --accent-glow: rgba(232,168,64,0.08);
+  --green:       #4CAF7D;
+  --red:         #E05C5C;
+  --blue:        #5C9BE0;
+  --slide-count: 7;
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  scroll-snap-type: y mandatory;
+  overflow-y: scroll;
+  scroll-behavior: smooth;
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  height: 100%;
+  cursor: default;
+}
+
+/* Noise texture overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0.4;
+}
+
+/* ============================================================
+   SLIDE SYSTEM
+   ============================================================ */
+.slide {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 6vh 8vw;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle ambient gradient per slide */
+.slide::after {
+  content: '';
+  position: absolute;
+  bottom: -30%;
+  right: -10%;
+  width: 55%;
+  height: 70%;
+  background: radial-gradient(ellipse at center, var(--accent-glow) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.slide-content {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1100px;
+}
+
+/* ============================================================
+   TYPOGRAPHY SYSTEM
+   ============================================================ */
+.slide-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  opacity: 0;
+  transform: translateY(12px);
+  animation: fadeUp 0.6s ease forwards;
+}
+
+.slide-label::after {
+  content: '';
+  display: inline-block;
+  width: 32px;
+  height: 1px;
+  background: var(--accent);
+  opacity: 0.5;
+}
+
+.slide-headline {
+  font-size: clamp(2.6rem, 5.5vw, 5rem);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  margin-bottom: 1.5rem;
+  opacity: 0;
+  transform: translateY(16px);
+  animation: fadeUp 0.6s ease 0.1s forwards;
+}
+
+.slide-headline em {
+  font-style: normal;
+  color: var(--accent);
+}
+
+.slide-sub {
+  font-size: clamp(1rem, 1.6vw, 1.2rem);
+  font-weight: 400;
+  color: var(--text-muted);
+  line-height: 1.7;
+  max-width: 680px;
+  opacity: 0;
+  transform: translateY(12px);
+  animation: fadeUp 0.6s ease 0.2s forwards;
+}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+@keyframes fadeUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slideRight {
+  from { transform: scaleX(0); transform-origin: left; }
+  to   { transform: scaleX(1); transform-origin: left; }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
+@keyframes flowDot {
+  0%   { transform: translateX(-100%); opacity: 0; }
+  20%  { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { transform: translateX(400%); opacity: 0; }
+}
+
+@keyframes countUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+.delay-1 { animation-delay: 0.3s !important; }
+.delay-2 { animation-delay: 0.45s !important; }
+.delay-3 { animation-delay: 0.6s !important; }
+.delay-4 { animation-delay: 0.75s !important; }
+.delay-5 { animation-delay: 0.9s !important; }
+.delay-6 { animation-delay: 1.05s !important; }
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+.nav-bar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 8vw;
+  background: linear-gradient(to bottom, rgba(10,10,10,0.95) 0%, transparent 100%);
+}
+
+.nav-logo {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.nav-logo span { color: var(--accent); }
+
+.nav-counter {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+}
+
+.nav-counter .current { color: var(--accent); }
+
+/* Progress bar */
+.progress-bar {
+  position: fixed;
+  top: 0; left: 0;
+  height: 2px;
+  background: var(--accent);
+  transition: width 0.4s ease;
+  z-index: 1000;
+  box-shadow: 0 0 8px var(--accent);
+}
+
+/* Nav arrows */
+.nav-arrows {
+  position: fixed;
+  right: 4vw;
+  bottom: 6vh;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nav-btn {
+  width: 40px; height: 40px;
+  border: 1px solid var(--border);
+  background: rgba(20,20,20,0.8);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(8px);
+  font-size: 16px;
+}
+
+.nav-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
+/* Slide dots */
+.slide-dots {
+  position: fixed;
+  left: 4vw;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.dot.active {
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+  transform: scale(1.4);
+}
+
+/* ============================================================
+   SLIDE 1 — TITLE
+   ============================================================ */
+#slide-1 {
+  background: var(--bg);
+}
+
+#slide-1 .slide-headline {
+  font-size: clamp(3rem, 6.5vw, 6.5rem);
+  max-width: 900px;
+}
+
+.title-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--accent-dim);
+  border: 1px solid var(--border-hot);
+  padding: 6px 14px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 2.5rem;
+  opacity: 0;
+  animation: fadeUp 0.5s ease 0s forwards;
+}
+
+.title-tag::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: pulse 2s infinite;
+}
+
+.title-meta {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  margin-top: 3rem;
+  opacity: 0;
+  animation: fadeUp 0.6s ease 0.35s forwards;
+}
+
+.title-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.title-meta-item .label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.title-meta-item .value {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.title-divider {
+  width: 1px;
+  height: 32px;
+  background: var(--border);
+}
+
+/* Grid lines decoration */
+.grid-lines {
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 45%;
+  opacity: 0.04;
+  background-image:
+    linear-gradient(var(--text) 1px, transparent 1px),
+    linear-gradient(90deg, var(--text) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none;
+}
+
+/* ============================================================
+   SLIDE 2 — PROBLEM
+   ============================================================ */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: start;
+  margin-top: 3rem;
+  opacity: 0;
+  animation: fadeUp 0.6s ease 0.3s forwards;
+}
+
+.process-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.flow-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 12px 0;
+  border-left: 1px solid var(--border);
+  padding-left: 20px;
+  position: relative;
+  opacity: 0;
+  transform: translateX(-8px);
+  animation: fadeUp 0.4s ease forwards;
+}
+
+.flow-step::before {
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: 18px;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--bg-card2);
+  border: 1.5px solid var(--border);
+}
+
+.flow-step.active-step::before {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+}
+
+.flow-step-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--text-dim);
+  min-width: 20px;
+  padding-top: 2px;
+}
+
+.flow-step-text {
+  font-size: 14px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.challenge-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.challenge-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--accent);
+  opacity: 0;
+  animation: fadeUp 0.4s ease forwards;
+}
+
+.challenge-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.challenge-text {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.challenge-text strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+/* ============================================================
+   SLIDE 3 — THOUGHT PROCESS
+   ============================================================ */
+.inspiration-bridge {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 2rem;
+  align-items: start;
+  margin-top: 3rem;
+  opacity: 0;
+  animation: fadeUp 0.6s ease 0.3s forwards;
+}
+
+.inspo-block {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 28px;
+}
+
+.inspo-block.highlight {
+  border-color: var(--border-hot);
+  background: linear-gradient(135deg, var(--bg-card) 0%, rgba(232,168,64,0.04) 100%);
+}
+
+.inspo-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 1rem;
+}
+
+.inspo-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 1.2rem;
+  line-height: 1.3;
+}
+
+.mini-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mini-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: 'DM Mono', monospace;
+}
+
+.mini-step .arrow {
+  color: var(--accent);
+  font-size: 10px;
+  opacity: 0.6;
+}
+
+.bridge-connector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-top: 4rem;
+  gap: 8px;
+}
+
+.bridge-line {
+  width: 1px;
+  height: 60px;
+  background: linear-gradient(to bottom, transparent, var(--accent), transparent);
+  position: relative;
+  overflow: hidden;
+}
+
+.bridge-line::after {
+  content: '';
+  position: absolute;
+  top: -4px; left: -2px;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: flowDot 2s ease-in-out infinite;
+}
+
+.bridge-text {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+
+.insight-quote {
+  margin-top: 2.5rem;
+  padding: 24px 28px;
+  border-left: 2px solid var(--accent);
+  background: var(--accent-dim);
+  opacity: 0;
+  animation: fadeUp 0.6s ease 0.5s forwards;
+}
+
+.insight-quote p {
+  font-size: clamp(1rem, 1.8vw, 1.3rem);
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1.6;
+  font-style: italic;
+}
+
+/* ============================================================
+   SLIDE 4 — DIGITAL EMPLOYEE CONCEPT
+   ============================================================ */
+.employee-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr;
+  gap: 4rem;
+  align-items: start;
+  margin-top: 3rem;
+  opacity: 0;
+  animation: fadeUp 0.6s ease 0.3s forwards;
+}
+
+.employee-journey {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+}
+
+.journey-step {
+  display: flex;
+  gap: 16px;
+  padding-bottom: 24px;
+  position: relative;
+  opacity: 0;
+  animation: fadeUp 0.4s ease forwards;
+}
+
+.journey-step::before {
+  content: '';
+  position: absolute;
+  left: 16px;
+  top: 32px;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(to bottom, var(--border), transparent);
+}
+
+.journey-step:last-child::before { display: none; }
+
+.journey-num {
+  width: 33px; height: 33px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  background: var(--bg);
+  z-index: 1;
+}
+
+.journey-step.active-step .journey-num {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.journey-content h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 2px;
+  padding-top: 6px;
+}
+
+.journey-content p {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* AI Learning Loop Diagram */
+.learning-loop {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.loop-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.loop-node {
+  flex: 1;
+  padding: 14px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  text-align: center;
+  position: relative;
+  opacity: 0;
+  animation: fadeUp 0.4s ease forwards;
+  transition: border-color 0.3s, background 0.3s;
+}
+
+.loop-node:hover {
+  border-color: var(--border-hot);
+  background: var(--accent-dim);
+}
+
+.loop-node.accent-node {
+  border-color: var(--border-hot);
+  background: linear-gradient(135deg, var(--bg-card) 0%, rgba(232,168,64,0.06) 100%);
+}
+
+.loop-node-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+
+.loop-node-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.loop-arrow {
+  width: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  font-size: 14px;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.loop-arrow::before {
+  content: '→';
+}
+
+.loop-vert-connector {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0;
+}
+
+.loop-vert-line {
+  width: 1px;
+  height: 20px;
+  background: linear-gradient(to bottom, var(--accent), var(--border));
+  position: relative;
+}
+
+/* Decision badges */
+.decision-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 1.5rem;
+  opacity: 0;
+  animation: fadeUp 0.5s ease 0.8s forwards;
+}
+
+.decision-badge {
+  flex: 1;
+  padding: 12px 16px;
+  text-align: center;
+  border: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.decision-badge.approve { border-color: var(--green); color: var(--green); background: rgba(76,175,125,0.05); }
+.decision-badge.flag { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+.decision-badge.reject { border-color: var(--red); color: var(--red); background: rgba(224,92,92,0.05); }
+
+/* ============================================================
+   SLIDE 5 — ARCHITECTURE
+   ============================================================ */
+.arch-layout {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 3rem;
+  margin-top: 3rem;
+  opacity: 0;
+  animation: fadeUp 0.6s ease 0.3s forwards;
+}
+
+.arch-pipeline {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+}
+
+.pipe-node {
+  padding: 14px 20px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  position: relative;
+  opacity: 0;
+  animation: fadeUp 0.4s ease forwards;
+  transition: all 0.2s;
+}
+
+.pipe-node:hover {
+  border-color: var(--border-hot);
+  background: var(--accent-dim);
+}
+
+.pipe-node.source-node {
+  border-color: rgba(92,155,224,0.4);
+  background: rgba(92,155,224,0.05);
+}
+
+.pipe-node.decision-node {
+  border-color: var(--border-hot);
+  background: linear-gradient(135deg, var(--bg-card) 0%, rgba(232,168,64,0.06) 100%);
+}
+
+.pipe-node-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 3px;
+}
+
+.pipe-node-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.pipe-node-detail {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  font-family: 'DM Mono', monospace;
+}
+
+.pipe-connector {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding-left: 20px;
+  height: 22px;
+  position: relative;
+}
+
+.pipe-connector::before {
+  content: '';
+  position: absolute;
+  left: 29px;
+  top: 0; bottom: 0;
+  width: 1px;
+  background: linear-gradient(to bottom, var(--border), var(--border));
+}
+
+.pipe-connector-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  position: absolute;
+  left: 27px;
+  animation: pulse 2s infinite;
+}
+
+/* Output branches */
+.output-branches {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 2rem;
+}
+
+.output-branch {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  opacity: 0;
+  animation: fadeUp 0.4s ease forwards;
+}
+
+.output-branch.approve { border-left: 3px solid var(--green); }
+.output-branch.flag { border-left: 3px solid var(--accent); }
+.output-branch.reject { border-left: 3px solid var(--red); }
+
+.branch-indicator {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.approve .branch-indicator { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.flag .branch-indicator { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+.reject .branch-indicator { background: var(--red); box-shadow: 0 0 6px var(--red); }
+
+.branch-text h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.branch-text p {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  font-family: 'DM Mono', monospace;
+}
+
+/* Learning loop badge */
+.feedback-loop-badge {
+  margin-top: 2rem;
+  padding: 16px 20px;
+  border: 1px dashed var(--border-hot);
+  background: var(--accent-glow);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  opacity: 0;
+  animation: fadeUp 0.6s ease 1s forwards;
+}
+
+.feedback-loop-badge .icon { font-size: 20px; }
+
+.feedback-loop-badge p {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.feedback-loop-badge strong { color: var(--accent); }
+
+/* Validation checks grid */
+.checks-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.check-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-muted);
+  opacity: 0;
+  animation: fadeUp 0.3s ease forwards;
+}
+
+.check-item .check-icon {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  flex-shrink: 0;
+  box-shadow: 0 0 4px var(--green);
+}
+
+/* ============================================================
+   SLIDE 6 — EDGE CASES
+   ============================================================ */
+.edge-cases-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2.5rem;
+  margin-top: 3rem;
+  opacity: 0;
+  animation: fadeUp 0.6s ease 0.3s forwards;
+}
+
+.edge-section-title {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 1rem;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.edge-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.edge-card {
+  padding: 14px 18px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: start;
+  opacity: 0;
+  animation: fadeUp 0.35s ease forwards;
+  transition: border-color 0.2s;
+}
+
+.edge-card:hover { border-color: var(--border-hot); }
+
+.edge-card-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 3px;
+}
+
+.edge-card-risk {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'DM Mono', monospace;
+}
+
+.edge-card-action {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  padding: 4px 8px;
+  border: 1px solid;
+  text-align: center;
+  white-space: nowrap;
+  align-self: start;
+}
+
+.action-flag { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
+.action-reject { color: var(--red); border-color: var(--red); background: rgba(224,92,92,0.05); }
+.action-approve { color: var(--green); border-color: var(--green); background: rgba(76,175,125,0.05); }
+
+.tech-edge-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tech-edge-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-muted);
+  opacity: 0;
+  animation: fadeUp 0.35s ease forwards;
+}
+
+.tech-edge-item::before {
+  content: '◈';
+  color: var(--blue);
+  font-size: 10px;
+}
+
+.solution-note {
+  margin-top: 1rem;
+  padding: 14px 18px;
+  border-left: 2px solid var(--blue);
+  background: rgba(92,155,224,0.05);
+  font-size: 12px;
+  color: var(--text-muted);
+  opacity: 0;
+  animation: fadeUp 0.5s ease 0.9s forwards;
+}
+
+.solution-note strong { color: var(--blue); }
+
+/* ============================================================
+   SLIDE 7 — IMPACT
+   ============================================================ */
+.impact-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  margin-top: 3rem;
+  opacity: 0;
+  animation: fadeUp 0.6s ease 0.3s forwards;
+}
+
+.impact-col-title {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 1.2rem;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.impact-items {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.impact-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 18px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  opacity: 0;
+  animation: fadeUp 0.4s ease forwards;
+}
+
+.impact-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+.impact-dot.green { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.impact-dot.amber { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+
+.impact-item-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.impact-item-text strong {
+  display: block;
+  font-size: 15px;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.closing-statement {
+  grid-column: 1 / -1;
+  margin-top: 1rem;
+  padding: 28px 32px;
+  border: 1px solid var(--border-hot);
+  background: linear-gradient(135deg, var(--bg-card) 0%, rgba(232,168,64,0.04) 100%);
+  opacity: 0;
+  animation: fadeUp 0.6s ease 0.8s forwards;
+}
+
+.closing-statement p {
+  font-size: clamp(1rem, 1.6vw, 1.25rem);
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1.7;
+  max-width: 800px;
+}
+
+.closing-statement p em {
+  color: var(--accent);
+  font-style: normal;
+}
+
+.closing-meta {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  margin-top: 1.5rem;
+}
+
+.closing-meta-stat {
+  text-align: center;
+}
+
+.closing-meta-stat .stat-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 28px;
+  font-weight: 500;
+  color: var(--accent);
+  display: block;
+  overflow: hidden;
+}
+
+.closing-meta-stat .stat-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  display: block;
+  margin-top: 4px;
+}
+
+.closing-meta-div {
+  width: 1px;
+  height: 48px;
+  background: var(--border);
+}
+
+/* ============================================================
+   KEYBOARD HINT
+   ============================================================ */
+.keyboard-hint {
+  position: fixed;
+  bottom: 6vh;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 999;
+  transition: opacity 0.5s;
+}
+
+.key-badge {
+  padding: 3px 6px;
+  border: 1px solid var(--border);
+  font-size: 9px;
+  color: var(--text-dim);
+}
+
+/* ============================================================
+   UTILITY
+   ============================================================ */
+.section-rule {
+  width: 40px;
+  height: 2px;
+  background: var(--accent);
+  margin-bottom: 2rem;
+  opacity: 0;
+  animation: fadeUp 0.5s ease 0.05s forwards;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 900px) {
+  .two-col, .employee-grid, .arch-layout,
+  .edge-cases-layout, .impact-layout,
+  .inspiration-bridge { grid-template-columns: 1fr; }
+  .bridge-connector { flex-direction: row; }
+  .bridge-text { writing-mode: horizontal-tb; }
+  .slide { padding: 8vh 6vw; }
+  .slide-dots { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- Progress Bar -->
+<div class="progress-bar" id="progressBar"></div>
+
+<!-- Navigation -->
+<nav class="nav-bar">
+  <div class="nav-logo"><span>Zamp.ai</span> — AI Solutions Associate</div>
+  <div class="nav-counter">
+    <span class="current" id="currentSlide">01</span> / 07
+  </div>
+</nav>
+
+<!-- Slide Dots -->
+<div class="slide-dots" id="slideDots">
+  <div class="dot active" onclick="goToSlide(0)"></div>
+  <div class="dot" onclick="goToSlide(1)"></div>
+  <div class="dot" onclick="goToSlide(2)"></div>
+  <div class="dot" onclick="goToSlide(3)"></div>
+  <div class="dot" onclick="goToSlide(4)"></div>
+  <div class="dot" onclick="goToSlide(5)"></div>
+  <div class="dot" onclick="goToSlide(6)"></div>
+</div>
+
+<!-- Navigation Arrows -->
+<div class="nav-arrows">
+  <button class="nav-btn" id="prevBtn" onclick="navigate(-1)" title="Previous (↑)">↑</button>
+  <button class="nav-btn" id="nextBtn" onclick="navigate(1)" title="Next (↓)">↓</button>
+</div>
+
+<!-- Keyboard Hint -->
+<div class="keyboard-hint" id="keyHint">
+  <span class="key-badge">↑</span>
+  <span class="key-badge">↓</span>
+  use arrow keys to navigate
+</div>
+
+<!-- ============================================================
+     SLIDE 1 — TITLE
+     ============================================================ -->
+<section class="slide" id="slide-1">
+  <div class="grid-lines"></div>
+  <div class="slide-content">
+
+    <div class="title-tag">Case Study — AI Solutions Associate</div>
+
+    <h1 class="slide-headline" style="animation-delay:0.1s;">
+      AI-Powered Invoice<br>Processing <em>Digital Employee</em>
+    </h1>
+
+    <p class="slide-sub" style="animation-delay:0.25s;">
+      A self-improving AI system that extracts, validates, decides, and learns —
+      the way a new hire does. Built on <em style="color:var(--accent);font-style:normal;">Zamp's philosophy</em> of velocity and controlled autonomy.
+    </p>
+
+    <div class="title-meta">
+      <div class="title-meta-item">
+        <span class="label">Project</span>
+        <span class="value">Invoice Processing Automation v2</span>
+      </div>
+      <div class="title-divider"></div>
+      <div class="title-meta-item">
+        <span class="label">Stack</span>
+        <span class="value">Groq · Llama 3.3 70B · Streamlit · Python</span>
+      </div>
+      <div class="title-divider"></div>
+      <div class="title-meta-item">
+        <span class="label">Scope</span>
+        <span class="value">25 Test Invoices · 13 Validation Checks · Learning Loop</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 2 — PROBLEM
+     ============================================================ -->
+<section class="slide" id="slide-2">
+  <div class="slide-content">
+
+    <div class="slide-label">01 — The Problem</div>
+    <h2 class="slide-headline">Finance teams are<br>drowning in <em>manual work</em></h2>
+    <p class="slide-sub">Every invoice processed by hand is a cost, a risk, and a delay. The current workflow was never designed to scale.</p>
+
+    <div class="two-col">
+      <!-- Current Process Flow -->
+      <div>
+        <p style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-dim);margin-bottom:1rem;">Current Manual Process</p>
+        <div class="process-flow">
+          <div class="flow-step" style="animation-delay:0.35s">
+            <span class="flow-step-num">01</span>
+            <span class="flow-step-text">Invoice Received</span>
+          </div>
+          <div class="flow-step" style="animation-delay:0.45s">
+            <span class="flow-step-num">02</span>
+            <span class="flow-step-text">Manual Data Extraction</span>
+          </div>
+          <div class="flow-step" style="animation-delay:0.55s">
+            <span class="flow-step-num">03</span>
+            <span class="flow-step-text">Vendor Validation</span>
+          </div>
+          <div class="flow-step" style="animation-delay:0.65s">
+            <span class="flow-step-num">04</span>
+            <span class="flow-step-text">PO Matching</span>
+          </div>
+          <div class="flow-step" style="animation-delay:0.75s">
+            <span class="flow-step-num">05</span>
+            <span class="flow-step-text">Approval Decision</span>
+          </div>
+          <div class="flow-step active-step" style="animation-delay:0.85s">
+            <span class="flow-step-num">06</span>
+            <span class="flow-step-text">ERP Update &amp; Audit Logging</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Challenges -->
+      <div>
+        <p style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-dim);margin-bottom:1rem;">Why This Breaks Down</p>
+        <div class="challenge-list">
+          <div class="challenge-item" style="animation-delay:0.4s">
+            <span class="challenge-icon">⟳</span>
+            <div class="challenge-text">
+              <strong>Repetitive Manual Work</strong>
+              Same steps, every invoice, every day — no learning, no improvement
+            </div>
+          </div>
+          <div class="challenge-item" style="animation-delay:0.52s">
+            <span class="challenge-icon">⚠</span>
+            <div class="challenge-text">
+              <strong>Human Error at Scale</strong>
+              A typo in vendor matching can result in fraud or duplicate payments
+            </div>
+          </div>
+          <div class="challenge-item" style="animation-delay:0.64s">
+            <span class="challenge-icon">⏱</span>
+            <div class="challenge-text">
+              <strong>Slow Approval Cycles</strong>
+              Bottlenecks delay vendor payments and damage supplier relationships
+            </div>
+          </div>
+          <div class="challenge-item" style="animation-delay:0.76s">
+            <span class="challenge-icon">↑</span>
+            <div class="challenge-text">
+              <strong>Can't Scale Operations</strong>
+              3× invoice volume = 3× headcount. There's no leverage
+            </div>
+          </div>
+          <div class="challenge-item" style="animation-delay:0.88s">
+            <span class="challenge-icon">₹</span>
+            <div class="challenge-text">
+              <strong>High Operational Cost</strong>
+              Finance headcount consumed by low-value, high-volume data entry
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Goal Statement -->
+    <div style="margin-top:2rem;padding:20px 28px;border:1px solid var(--border-hot);background:var(--accent-glow);display:flex;align-items:flex-start;gap:20px;opacity:0;animation:fadeUp 0.6s ease 0.9s forwards;">
+      <div style="flex-shrink:0;padding-top:2px;">
+        <span style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:4px;">Goal</span>
+        <div style="width:24px;height:1px;background:var(--accent);opacity:0.5;"></div>
+      </div>
+      <p style="font-size:15px;color:var(--text);font-weight:500;line-height:1.6;">
+        Build a <span style="color:var(--accent);">digital employee</span> that performs invoice processing tasks reliably — understanding invoices, validating information, handling exceptions, and <span style="color:var(--accent);">continuously improving through feedback</span> — without requiring a human to babysit every decision.
+      </p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 3 — THOUGHT PROCESS
+     ============================================================ -->
+<section class="slide" id="slide-3">
+  <div class="slide-content">
+
+    <div class="slide-label">02 — My Thought Process</div>
+    <h2 class="slide-headline">I didn't start by<br>writing <em>a single line of code</em></h2>
+    <p class="slide-sub">I started by studying how a real automation workflow is designed — and found the answer inside Zamp itself.</p>
+
+    <div class="inspiration-bridge">
+      <!-- Zamp's Approach -->
+      <div class="inspo-block">
+        <div class="inspo-label">Zamp's Existing System</div>
+        <div class="inspo-title">Bank Statement Processing</div>
+        <div class="mini-flow">
+          <div class="mini-step"><span>Document</span></div>
+          <div class="mini-step"><span class="arrow">↓</span><span>AI Extraction</span></div>
+          <div class="mini-step"><span class="arrow">↓</span><span>Field Mapping</span></div>
+          <div class="mini-step"><span class="arrow">↓</span><span>Validation</span></div>
+          <div class="mini-step"><span class="arrow">↓</span><span>Exception Handling</span></div>
+          <div class="mini-step"><span class="arrow">↓</span><span>Standardised Output</span></div>
+        </div>
+        <p style="font-size:11px;color:var(--text-dim);margin-top:1rem;font-family:'DM Mono',monospace;">
+          → Island detection, LLM field mapping, adaptive templates
+        </p>
+      </div>
+
+      <!-- Bridge -->
+      <div class="bridge-connector">
+        <div class="bridge-line"></div>
+        <div class="bridge-text">inspired</div>
+        <div class="bridge-line"></div>
+      </div>
+
+      <!-- My Approach -->
+      <div class="inspo-block highlight">
+        <div class="inspo-label">My System — Invoice Processing</div>
+        <div class="inspo-title">Same Pattern, New Layer</div>
+        <div class="mini-flow">
+          <div class="mini-step"><span>Invoice PDF</span></div>
+          <div class="mini-step"><span class="arrow">↓</span><span>AI Extraction</span></div>
+          <div class="mini-step"><span class="arrow">↓</span><span>Validation Engine (13 checks)</span></div>
+          <div class="mini-step"><span class="arrow">↓</span><span>Decision Engine</span></div>
+          <div class="mini-step"><span class="arrow">↓</span><span>Human Feedback</span></div>
+          <div class="mini-step" style="color:var(--accent)"><span class="arrow">↓</span><span><strong>Learning Rules → Better Decisions</strong></span></div>
+        </div>
+        <p style="font-size:11px;color:var(--accent);margin-top:1rem;font-family:'DM Mono',monospace;">
+          + Continuous improvement loop
+        </p>
+      </div>
+    </div>
+
+    <div class="insight-quote">
+      <p>"Can I create an AI system that <em style="color:var(--accent);font-style:normal;">learns the way a new employee learns</em>? — not just one that processes, but one that remembers, adapts, and gets better with every correction."</p>
+    </div>
+
+    <!-- What the pattern taught me -->
+    <div style="margin-top:2rem;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;opacity:0;animation:fadeUp 0.6s ease 0.7s forwards;">
+      <div style="padding:16px 18px;background:var(--bg-card);border:1px solid var(--border);">
+        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">Pattern 01</div>
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">AI for Extraction</div>
+        <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">Use LLMs where human intent matters — reading messy documents, understanding field semantics, handling format variations</div>
+      </div>
+      <div style="padding:16px 18px;background:var(--bg-card);border:1px solid var(--border);">
+        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">Pattern 02</div>
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Rules for Decisions</div>
+        <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">Finance decisions must be deterministic and auditable — rules validate, not models. Every decision must have an explanation</div>
+      </div>
+      <div style="padding:16px 18px;background:var(--bg-card);border:1px solid var(--border-hot);background:var(--accent-glow);">
+        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);margin-bottom:8px;">My Addition</div>
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Humans Teach the Loop</div>
+        <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">Zamp stopped at standardised output. I added a feedback layer — every override becomes a permanent, auditable learning rule</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 4 — DIGITAL EMPLOYEE CONCEPT
+     ============================================================ -->
+<section class="slide" id="slide-4">
+  <div class="slide-content">
+
+    <div class="slide-label">03 — The Digital Employee Concept</div>
+    <h2 class="slide-headline">Building AI that onboards<br>like a <em>new hire</em></h2>
+    <p class="slide-sub">When a new employee joins, they make mistakes, receive feedback, and improve. I designed the AI to do the same thing — with one critical advantage: it never forgets a lesson.</p>
+
+    <div class="employee-grid">
+      <!-- Human Employee Journey -->
+      <div>
+        <p style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-dim);margin-bottom:1.2rem;">How a New Employee Learns</p>
+        <div class="employee-journey">
+          <div class="journey-step" style="animation-delay:0.35s">
+            <div class="journey-num">1</div>
+            <div class="journey-content">
+              <h4>Processes Invoices</h4>
+              <p>Handles the daily workload</p>
+            </div>
+          </div>
+          <div class="journey-step" style="animation-delay:0.45s">
+            <div class="journey-num">2</div>
+            <div class="journey-content">
+              <h4>Makes Mistakes</h4>
+              <p>Mismatches, missed fields, wrong decisions</p>
+            </div>
+          </div>
+          <div class="journey-step active-step" style="animation-delay:0.55s">
+            <div class="journey-num">3</div>
+            <div class="journey-content">
+              <h4>Receives Feedback</h4>
+              <p>Reviewer corrects and explains</p>
+            </div>
+          </div>
+          <div class="journey-step active-step" style="animation-delay:0.65s">
+            <div class="journey-num">4</div>
+            <div class="journey-content">
+              <h4>Learns Patterns</h4>
+              <p>Internalises new rules</p>
+            </div>
+          </div>
+          <div class="journey-step active-step" style="animation-delay:0.75s">
+            <div class="journey-num">5</div>
+            <div class="journey-content">
+              <h4>Improves Over Time</h4>
+              <p>Fewer errors, more confidence</p>
+            </div>
+          </div>
+          <div class="journey-step active-step" style="animation-delay:0.85s">
+            <div class="journey-num">6</div>
+            <div class="journey-content">
+              <h4>Works Independently</h4>
+              <p>Minimal supervision needed</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Learning Loop -->
+      <div>
+        <p style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-dim);margin-bottom:1.2rem;">How the AI Replicates This</p>
+
+        <div class="learning-loop">
+          <div class="loop-row">
+            <div class="loop-node" style="animation-delay:0.35s">
+              <div class="loop-node-label">Input</div>
+              <div class="loop-node-text">Invoice Upload</div>
+            </div>
+            <div class="loop-arrow"></div>
+            <div class="loop-node" style="animation-delay:0.45s">
+              <div class="loop-node-label">AI Step</div>
+              <div class="loop-node-text">Data Extraction</div>
+            </div>
+          </div>
+          <div class="loop-vert-connector">
+            <div class="loop-vert-line"></div>
+          </div>
+          <div class="loop-row">
+            <div class="loop-node" style="animation-delay:0.55s">
+              <div class="loop-node-label">Logic</div>
+              <div class="loop-node-text">Validation Engine</div>
+            </div>
+            <div class="loop-arrow"></div>
+            <div class="loop-node accent-node" style="animation-delay:0.65s">
+              <div class="loop-node-label">Output</div>
+              <div class="loop-node-text">Decision</div>
+            </div>
+          </div>
+          <div class="loop-vert-connector">
+            <div class="loop-vert-line"></div>
+          </div>
+          <div class="loop-row">
+            <div class="loop-node" style="animation-delay:0.75s">
+              <div class="loop-node-label">Human</div>
+              <div class="loop-node-text">Reviewer Feedback</div>
+            </div>
+            <div class="loop-arrow"></div>
+            <div class="loop-node accent-node" style="animation-delay:0.85s">
+              <div class="loop-node-label">🔁 Learning</div>
+              <div class="loop-node-text">Approved Rule Saved</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="decision-row">
+          <div class="decision-badge approve">✓ Approve</div>
+          <div class="decision-badge flag">⚑ Flag</div>
+          <div class="decision-badge reject">✕ Reject</div>
+        </div>
+
+        <!-- 6 Learning Rule Types -->
+        <div style="margin-top:1.5rem;opacity:0;animation:fadeUp 0.5s ease 1s forwards;">
+          <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);">6 Types of Learning Rules the System Supports</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+            <div style="padding:9px 12px;background:var(--bg-card);border:1px solid var(--border);display:flex;gap:8px;align-items:flex-start;">
+              <span style="color:var(--accent);font-size:10px;margin-top:2px;flex-shrink:0;">◆</span>
+              <div>
+                <div style="font-size:11px;font-weight:600;color:var(--text);">vendor_alias</div>
+                <div style="font-size:10px;color:var(--text-muted);font-family:'DM Mono',monospace;">e.g. "Delta Logistics Pvt" → "Delta Logistics"</div>
+              </div>
+            </div>
+            <div style="padding:9px 12px;background:var(--bg-card);border:1px solid var(--border);display:flex;gap:8px;align-items:flex-start;">
+              <span style="color:var(--accent);font-size:10px;margin-top:2px;flex-shrink:0;">◆</span>
+              <div>
+                <div style="font-size:11px;font-weight:600;color:var(--text);">po_mapping</div>
+                <div style="font-size:10px;color:var(--text-muted);font-family:'DM Mono',monospace;">Map extracted PO alias to canonical PO</div>
+              </div>
+            </div>
+            <div style="padding:9px 12px;background:var(--bg-card);border:1px solid var(--border);display:flex;gap:8px;align-items:flex-start;">
+              <span style="color:var(--accent);font-size:10px;margin-top:2px;flex-shrink:0;">◆</span>
+              <div>
+                <div style="font-size:11px;font-weight:600;color:var(--text);">credit_pattern</div>
+                <div style="font-size:10px;color:var(--text-muted);font-family:'DM Mono',monospace;">Treat "Credit Adjustment" text as credit note</div>
+              </div>
+            </div>
+            <div style="padding:9px 12px;background:var(--bg-card);border:1px solid var(--border);display:flex;gap:8px;align-items:flex-start;">
+              <span style="color:var(--accent);font-size:10px;margin-top:2px;flex-shrink:0;">◆</span>
+              <div>
+                <div style="font-size:11px;font-weight:600;color:var(--text);">credit_note_policy</div>
+                <div style="font-size:10px;color:var(--text-muted);font-family:'DM Mono',monospace;">Auto-approve credit notes for a specific vendor</div>
+              </div>
+            </div>
+            <div style="padding:9px 12px;background:var(--bg-card);border:1px solid var(--border);display:flex;gap:8px;align-items:flex-start;">
+              <span style="color:var(--accent);font-size:10px;margin-top:2px;flex-shrink:0;">◆</span>
+              <div>
+                <div style="font-size:11px;font-weight:600;color:var(--text);">tax_currency_exception</div>
+                <div style="font-size:10px;color:var(--text-muted);font-family:'DM Mono',monospace;">Skip GST check for approved EUR/VAT invoices</div>
+              </div>
+            </div>
+            <div style="padding:9px 12px;background:var(--bg-card);border:1px solid var(--border);display:flex;gap:8px;align-items:flex-start;">
+              <span style="color:var(--accent);font-size:10px;margin-top:2px;flex-shrink:0;">◆</span>
+              <div>
+                <div style="font-size:11px;font-weight:600;color:var(--text);">general_note</div>
+                <div style="font-size:10px;color:var(--text-muted);font-family:'DM Mono',monospace;">Store reviewer knowledge without changing validation</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 5 — ARCHITECTURE
+     ============================================================ -->
+<section class="slide" id="slide-5">
+  <div class="slide-content">
+
+    <div class="slide-label">04 — How The System Works</div>
+    <h2 class="slide-headline">Every decision is<br><em>explainable and auditable</em></h2>
+    <p class="slide-sub">AI handles what it's best at — reading messy documents. Rules handle what compliance demands — predictable, traceable decisions.</p>
+
+    <div class="arch-layout">
+
+      <!-- Pipeline -->
+      <div>
+        <p style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-dim);margin-bottom:1rem;">Processing Pipeline</p>
+        <div class="arch-pipeline">
+          <div class="pipe-node source-node" style="animation-delay:0.3s">
+            <div class="pipe-node-label">Input</div>
+            <div class="pipe-node-text">Invoice PDF</div>
+            <div class="pipe-node-detail">Any format · Scanned or digital</div>
+          </div>
+          <div class="pipe-connector"><div class="pipe-connector-dot"></div></div>
+          <div class="pipe-node" style="animation-delay:0.42s">
+            <div class="pipe-node-label">AI Layer</div>
+            <div class="pipe-node-text">Extraction Engine</div>
+            <div class="pipe-node-detail">Groq · Llama 3.3 70B · OCR fallback</div>
+          </div>
+          <div class="pipe-connector"><div class="pipe-connector-dot"></div></div>
+          <div class="pipe-node" style="animation-delay:0.54s">
+            <div class="pipe-node-label">Rules Layer</div>
+            <div class="pipe-node-text">13 Validation Checks</div>
+            <div class="pipe-node-detail">Deterministic · Per-check audit trail</div>
+          </div>
+          <div class="pipe-connector"><div class="pipe-connector-dot"></div></div>
+          <div class="pipe-node" style="animation-delay:0.66s">
+            <div class="pipe-node-label">Scoring</div>
+            <div class="pipe-node-text">Confidence Assessment</div>
+            <div class="pipe-node-detail">Itemised breakdown · Not a black box</div>
+          </div>
+          <div class="pipe-connector"><div class="pipe-connector-dot"></div></div>
+          <div class="pipe-node decision-node" style="animation-delay:0.78s">
+            <div class="pipe-node-label">Decision</div>
+            <div class="pipe-node-text">Final Status + Email Draft</div>
+            <div class="pipe-node-detail">With suggested action · Full reasoning</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: outputs + checks -->
+      <div>
+        <p style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-dim);margin-bottom:1rem;">Decision Outputs</p>
+        <div class="output-branches">
+          <div class="output-branch approve" style="animation-delay:0.35s">
+            <div class="branch-indicator"></div>
+            <div class="branch-text">
+              <h4>Approved</h4>
+              <p>All checks passed · Auto-logged · ERP-ready</p>
+            </div>
+          </div>
+          <div class="output-branch flag" style="animation-delay:0.48s">
+            <div class="branch-indicator"></div>
+            <div class="branch-text">
+              <h4>Flagged for Review</h4>
+              <p>Needs human eyes · Draft email generated · Reason cited</p>
+            </div>
+          </div>
+          <div class="output-branch reject" style="animation-delay:0.61s">
+            <div class="branch-indicator"></div>
+            <div class="branch-text">
+              <h4>Rejected</h4>
+              <p>Duplicate / unknown vendor / major variance · Hard stop</p>
+            </div>
+          </div>
+        </div>
+
+        <p style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-dim);margin:1.5rem 0 0.8rem;">Validation Checks at a Glance</p>
+        <div class="checks-grid">
+          <div class="check-item" style="animation-delay:0.4s;flex-direction:column;align-items:flex-start;gap:4px;">
+            <div style="display:flex;align-items:center;gap:8px;"><span class="check-icon"></span><span style="font-weight:600;color:var(--text);">Invoice Date Sanity</span></div>
+            <span style="font-size:10px;color:var(--text-dim);padding-left:14px;">Future-dated or stale (&gt;180 days) → Flag</span>
+          </div>
+          <div class="check-item" style="animation-delay:0.46s;flex-direction:column;align-items:flex-start;gap:4px;">
+            <div style="display:flex;align-items:center;gap:8px;"><span class="check-icon"></span><span style="font-weight:600;color:var(--text);">Critical Fields</span></div>
+            <span style="font-size:10px;color:var(--text-dim);padding-left:14px;">Invoice #, vendor name, total amount must exist</span>
+          </div>
+          <div class="check-item" style="animation-delay:0.52s;flex-direction:column;align-items:flex-start;gap:4px;">
+            <div style="display:flex;align-items:center;gap:8px;"><span class="check-icon"></span><span style="font-weight:600;color:var(--text);">Credit Note Detection</span></div>
+            <span style="font-size:10px;color:var(--text-dim);padding-left:14px;">Negative amount / CN- prefix / "credit" keyword</span>
+          </div>
+          <div class="check-item" style="animation-delay:0.58s;flex-direction:column;align-items:flex-start;gap:4px;">
+            <div style="display:flex;align-items:center;gap:8px;"><span class="check-icon"></span><span style="font-weight:600;color:var(--text);">Duplicate Detection</span></div>
+            <span style="font-size:10px;color:var(--text-dim);padding-left:14px;">Invoice # + vendor fuzzy match at 90% threshold</span>
+          </div>
+          <div class="check-item" style="animation-delay:0.64s;flex-direction:column;align-items:flex-start;gap:4px;">
+            <div style="display:flex;align-items:center;gap:8px;"><span class="check-icon"></span><span style="font-weight:600;color:var(--text);">Vendor Verification</span></div>
+            <span style="font-size:10px;color:var(--text-dim);padding-left:14px;">Fuzzy match vendor master (85%) + approval status</span>
+          </div>
+          <div class="check-item" style="animation-delay:0.7s;flex-direction:column;align-items:flex-start;gap:4px;">
+            <div style="display:flex;align-items:center;gap:8px;"><span class="check-icon"></span><span style="font-weight:600;color:var(--text);">PO Matching</span></div>
+            <span style="font-size:10px;color:var(--text-dim);padding-left:14px;">Direct lookup → fuzzy inference → closed PO detect</span>
+          </div>
+          <div class="check-item" style="animation-delay:0.76s;flex-direction:column;align-items:flex-start;gap:4px;">
+            <div style="display:flex;align-items:center;gap:8px;"><span class="check-icon"></span><span style="font-weight:600;color:var(--text);">Amount Comparison</span></div>
+            <span style="font-size:10px;color:var(--text-dim);padding-left:14px;">&lt;5% → Approve · 5–10% → Flag · &gt;10% → Reject</span>
+          </div>
+          <div class="check-item" style="animation-delay:0.82s;flex-direction:column;align-items:flex-start;gap:4px;">
+            <div style="display:flex;align-items:center;gap:8px;"><span class="check-icon"></span><span style="font-weight:600;color:var(--text);">Cumulative Invoicing</span></div>
+            <span style="font-size:10px;color:var(--text-dim);padding-left:14px;">Tracks running total per PO across multiple invoices</span>
+          </div>
+        </div>
+
+        <div class="feedback-loop-badge">
+          <span class="icon">🔁</span>
+          <p>Human overrides are converted into <strong>approved learning rules</strong> — stored as auditable JSON and applied automatically to all future invoices.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 6 — EDGE CASES
+     ============================================================ -->
+<section class="slide" id="slide-6">
+  <div class="slide-content">
+
+    <div class="slide-label">05 — Edge Cases &amp; Reliability</div>
+    <h2 class="slide-headline">Real systems fail at<br>the <em>edges</em> — so I started there</h2>
+    <p class="slide-sub">I catalogued 16 edge cases across two categories before writing the validation layer. Each one maps to a real financial risk or operational failure mode.</p>
+
+    <div class="edge-cases-layout">
+
+      <!-- Business Edge Cases -->
+      <div>
+        <div class="edge-section-title">Business Edge Cases</div>
+        <div class="edge-cards">
+          <div class="edge-card" style="animation-delay:0.3s">
+            <div>
+              <div class="edge-card-name">Duplicate Invoice</div>
+              <div class="edge-card-risk">Risk: double payment</div>
+            </div>
+            <span class="edge-card-action action-reject">Reject</span>
+          </div>
+          <div class="edge-card" style="animation-delay:0.38s">
+            <div>
+              <div class="edge-card-name">Vendor Mismatch</div>
+              <div class="edge-card-risk">Risk: fraud or incorrect billing</div>
+            </div>
+            <span class="edge-card-action action-flag">Flag</span>
+          </div>
+          <div class="edge-card" style="animation-delay:0.46s">
+            <div>
+              <div class="edge-card-name">Amount Mismatch &gt;10%</div>
+              <div class="edge-card-risk">Risk: unauthorised spending</div>
+            </div>
+            <span class="edge-card-action action-reject">Reject</span>
+          </div>
+          <div class="edge-card" style="animation-delay:0.54s">
+            <div>
+              <div class="edge-card-name">Closed Purchase Order</div>
+              <div class="edge-card-risk">Risk: payment against inactive PO</div>
+            </div>
+            <span class="edge-card-action action-flag">Flag</span>
+          </div>
+          <div class="edge-card" style="animation-delay:0.62s">
+            <div>
+              <div class="edge-card-name">Future-Dated Invoice</div>
+              <div class="edge-card-risk">Risk: data entry error</div>
+            </div>
+            <span class="edge-card-action action-flag">Flag</span>
+          </div>
+          <div class="edge-card" style="animation-delay:0.7s">
+            <div>
+              <div class="edge-card-name">Unapproved Vendor</div>
+              <div class="edge-card-risk">Risk: compliance violation</div>
+            </div>
+            <span class="edge-card-action action-reject">Reject</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Technical + Solution -->
+      <div>
+        <div class="edge-section-title">Technical Edge Cases</div>
+        <div class="tech-edge-list">
+          <div class="tech-edge-item" style="animation-delay:0.32s">OCR extraction errors on scanned PDFs</div>
+          <div class="tech-edge-item" style="animation-delay:0.4s">Corrupted or blank PDF uploads</div>
+          <div class="tech-edge-item" style="animation-delay:0.48s">Low-confidence AI extraction</div>
+          <div class="tech-edge-item" style="animation-delay:0.56s">Partial invoice data — missing non-critical fields</div>
+          <div class="tech-edge-item" style="animation-delay:0.64s">Multiple invoice formats (lump sum vs itemised)</div>
+          <div class="tech-edge-item" style="animation-delay:0.72s">Vendor name abbreviations &amp; typos (fuzzy matching)</div>
+          <div class="tech-edge-item" style="animation-delay:0.8s">Groq API rate limits — model fallback chain</div>
+        </div>
+
+        <div class="solution-note">
+          <strong>Solution Design:</strong> Every technical failure routes to human review with a confidence score and error code — not a silent failure. The system degrades gracefully, never silently.
+        </div>
+
+        <div style="margin-top:1.5rem;padding:16px 20px;background:var(--bg-card);border:1px solid var(--border);opacity:0;animation:fadeUp 0.5s ease 0.85s forwards">
+          <p style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;">Test Coverage</p>
+          <div style="display:flex;gap:1.5rem;flex-wrap:wrap">
+            <div>
+              <span style="font-family:'DM Mono',monospace;font-size:26px;color:var(--accent);display:block;font-weight:500;">25</span>
+              <span style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);">Test Invoices</span>
+            </div>
+            <div style="width:1px;background:var(--border)"></div>
+            <div>
+              <span style="font-family:'DM Mono',monospace;font-size:26px;color:var(--accent);display:block;font-weight:500;">13</span>
+              <span style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);">Validation Checks</span>
+            </div>
+            <div style="width:1px;background:var(--border)"></div>
+            <div>
+              <span style="font-family:'DM Mono',monospace;font-size:26px;color:var(--accent);display:block;font-weight:500;">16+</span>
+              <span style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);">Edge Cases</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 7 — IMPACT & LEARNING
+     ============================================================ -->
+<section class="slide" id="slide-7">
+  <div class="slide-content">
+
+    <div class="slide-label">06 — Business Impact</div>
+    <h2 class="slide-headline">This is not a tool.<br>It's a <em>digital employee</em></h2>
+    <p class="slide-sub">The goal was never to automate a checklist. It was to build something that earns more autonomy over time — exactly how Zamp thinks about AI at work.</p>
+
+    <div class="impact-layout">
+
+      <div>
+        <div class="impact-col-title">Operational Impact</div>
+        <div class="impact-items">
+          <div class="impact-item" style="animation-delay:0.35s">
+            <div class="impact-dot green"></div>
+            <div class="impact-item-text">
+              <strong>Eliminated Repetitive Manual Work</strong>
+              Extraction, validation, and decision — fully automated end-to-end. No human touches a normal invoice
+            </div>
+          </div>
+          <div class="impact-item" style="animation-delay:0.48s">
+            <div class="impact-dot green"></div>
+            <div class="impact-item-text">
+              <strong>Full Per-Check Audit Visibility</strong>
+              Every check logged with pass/fail reasoning and machine-readable error codes — not a black box confidence score
+            </div>
+          </div>
+          <div class="impact-item" style="animation-delay:0.61s">
+            <div class="impact-dot green"></div>
+            <div class="impact-item-text">
+              <strong>Faster Processing Cycles</strong>
+              Hours of manual review compressed to seconds. Context-specific draft emails generated for every flagged or rejected invoice
+            </div>
+          </div>
+          <div class="impact-item" style="animation-delay:0.74s">
+            <div class="impact-dot green"></div>
+            <div class="impact-item-text">
+              <strong>Better Vendor Relationships</strong>
+              Faster decisions mean faster vendor payments — reduces late payment risk and improves supplier trust
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="impact-col-title">Business Impact</div>
+        <div class="impact-items">
+          <div class="impact-item" style="animation-delay:0.42s">
+            <div class="impact-dot amber"></div>
+            <div class="impact-item-text">
+              <strong>Scales Without Adding Headcount</strong>
+              3× invoice volume requires zero additional hire. The system processes batch or single invoices identically
+            </div>
+          </div>
+          <div class="impact-item" style="animation-delay:0.55s">
+            <div class="impact-dot amber"></div>
+            <div class="impact-item-text">
+              <strong>Reduces Compliance &amp; Fraud Risk</strong>
+              Unapproved vendors, duplicates, closed POs, and amount variances caught systematically — every time
+            </div>
+          </div>
+          <div class="impact-item" style="animation-delay:0.68s">
+            <div class="impact-dot amber"></div>
+            <div class="impact-item-text">
+              <strong>Compounds in Intelligence Over Time</strong>
+              Human feedback becomes a permanent approved rule. The system earns more autonomy with every correction cycle
+            </div>
+          </div>
+          <div class="impact-item" style="animation-delay:0.81s">
+            <div class="impact-dot amber"></div>
+            <div class="impact-item-text">
+              <strong>ERP-Ready Output</strong>
+              Full audit trail stored as structured JSON — ready to integrate with SAP, Oracle, or NetSuite
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Key Learnings + What I'd Build Next — full width -->
+      <div style="grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-top:0.5rem;opacity:0;animation:fadeUp 0.6s ease 0.7s forwards;">
+
+        <!-- Key Learnings -->
+        <div style="padding:24px 28px;background:var(--bg-card);border:1px solid var(--border);">
+          <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-dim);margin-bottom:1rem;padding-bottom:8px;border-bottom:1px solid var(--border);">Biggest Learning</div>
+          <p style="font-size:14px;color:var(--text-muted);line-height:1.7;margin-bottom:1rem;">Successful AI systems are not built around models. They are built around:</p>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text);font-weight:500;"><span style="color:var(--accent);font-size:10px;">→</span>Understanding the workflow deeply before automating</div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text);font-weight:500;"><span style="color:var(--accent);font-size:10px;">→</span>Designing exception handling before the happy path</div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text);font-weight:500;"><span style="color:var(--accent);font-size:10px;">→</span>Keeping AI and deterministic rules clearly separated</div>
+            <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text);font-weight:500;"><span style="color:var(--accent);font-size:10px;">→</span>Building reliable human-AI collaboration, not replacement</div>
+          </div>
+        </div>
+
+        <!-- What I'd Build Next -->
+        <div style="padding:24px 28px;background:var(--bg-card);border:1px solid var(--border);">
+          <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-dim);margin-bottom:1rem;padding-bottom:8px;border-bottom:1px solid var(--border);">What I'd Build Next</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="display:flex;gap:10px;align-items:flex-start;">
+              <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text-dim);padding-top:3px;flex-shrink:0;">01</span>
+              <div style="font-size:13px;color:var(--text-muted);"><span style="color:var(--text);font-weight:600;">ERP Integration</span> — Live PO data from SAP, Oracle, NetSuite instead of CSV</div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:flex-start;">
+              <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text-dim);padding-top:3px;flex-shrink:0;">02</span>
+              <div style="font-size:13px;color:var(--text-muted);"><span style="color:var(--text);font-weight:600;">Email Automation</span> — Auto-send draft emails via SMTP, track vendor replies</div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:flex-start;">
+              <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text-dim);padding-top:3px;flex-shrink:0;">03</span>
+              <div style="font-size:13px;color:var(--text-muted);"><span style="color:var(--text);font-weight:600;">Approval Workflow</span> — Manager sign-off UI for flagged invoices</div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:flex-start;">
+              <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text-dim);padding-top:3px;flex-shrink:0;">04</span>
+              <div style="font-size:13px;color:var(--text-muted);"><span style="color:var(--text);font-weight:600;">Multi-Agent Orchestration</span> — Separate agents for intake, validation, and follow-up</div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:flex-start;">
+              <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text-dim);padding-top:3px;flex-shrink:0;">05</span>
+              <div style="font-size:13px;color:var(--text-muted);"><span style="color:var(--text);font-weight:600;">Multi-Currency + ML Anomaly</span> — Real-time FX + fraud pattern detection</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="closing-statement">
+        <p>
+          This project taught me to think about AI <em>not as a tool, but as a digital employee</em> — one that reads, validates, decides, explains, and learns.
+          That is <em>exactly what Zamp is building at scale</em>. I want to help build it.
+        </p>
+        <div class="closing-meta">
+          <div class="closing-meta-stat">
+            <span class="stat-num">25</span>
+            <span class="stat-label">Test Invoices</span>
+          </div>
+          <div class="closing-meta-div"></div>
+          <div class="closing-meta-stat">
+            <span class="stat-num">13</span>
+            <span class="stat-label">Validation Checks</span>
+          </div>
+          <div class="closing-meta-div"></div>
+          <div class="closing-meta-stat">
+            <span class="stat-num">6</span>
+            <span class="stat-label">Learning Rule Types</span>
+          </div>
+          <div class="closing-meta-div"></div>
+          <div class="closing-meta-stat">
+            <span class="stat-num">16+</span>
+            <span class="stat-label">Edge Cases Covered</span>
+          </div>
+          <div class="closing-meta-div"></div>
+          <div class="closing-meta-stat">
+            <span class="stat-num">v2</span>
+            <span class="stat-label">Shipped &amp; Deployed</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================================================
+     JAVASCRIPT — Navigation & Scroll Sync
+     ============================================================ -->
+<script>
+const TOTAL_SLIDES = 7;
+let currentIndex = 0;
+
+const slides = Array.from(document.querySelectorAll('.slide'));
+const dots = Array.from(document.querySelectorAll('.dot'));
+const progressBar = document.getElementById('progressBar');
+const currentSlideEl = document.getElementById('currentSlide');
+const keyHint = document.getElementById('keyHint');
+
+// Hide keyboard hint after 5 seconds
+setTimeout(() => { keyHint.style.opacity = '0'; }, 5000);
+
+function updateNav(index) {
+  currentIndex = index;
+  // Counter
+  currentSlideEl.textContent = String(index + 1).padStart(2, '0');
+  // Progress bar
+  progressBar.style.width = `${((index + 1) / TOTAL_SLIDES) * 100}%`;
+  // Dots
+  dots.forEach((d, i) => d.classList.toggle('active', i === index));
+  // Trigger animations for the visible slide
+  triggerSlideAnimations(index);
+}
+
+function triggerSlideAnimations(index) {
+  // Re-trigger animations by resetting them on the active slide's children
+  const slide = slides[index];
+  const animated = slide.querySelectorAll('[style*="animation-delay"],[class*="delay-"]');
+  animated.forEach(el => {
+    el.style.animationPlayState = 'running';
+  });
+}
+
+function goToSlide(index) {
+  if (index < 0) index = 0;
+  if (index >= TOTAL_SLIDES) index = TOTAL_SLIDES - 1;
+  slides[index].scrollIntoView({ behavior: 'smooth' });
+  updateNav(index);
+}
+
+function navigate(dir) {
+  goToSlide(currentIndex + dir);
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === 'PageDown') {
+    e.preventDefault();
+    navigate(1);
+  } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft' || e.key === 'PageUp') {
+    e.preventDefault();
+    navigate(-1);
+  }
+});
+
+// Scroll-based detection
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
+      const index = slides.indexOf(entry.target);
+      if (index !== -1) updateNav(index);
+    }
+  });
+}, { threshold: 0.5 });
+
+slides.forEach(slide => observer.observe(slide));
+
+// Touch swipe support
+let touchStartY = 0;
+document.addEventListener('touchstart', e => { touchStartY = e.touches[0].clientY; }, { passive: true });
+document.addEventListener('touchend', e => {
+  const diff = touchStartY - e.changedTouches[0].clientY;
+  if (Math.abs(diff) > 50) navigate(diff > 0 ? 1 : -1);
+}, { passive: true });
+
+// Initial state
+updateNav(0);
+</script>
+
+</body>
+</html>
